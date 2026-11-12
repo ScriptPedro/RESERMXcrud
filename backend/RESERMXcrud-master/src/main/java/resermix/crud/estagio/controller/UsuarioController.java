@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.regex.Pattern;
  
 @RestController
 @RequestMapping("/usuarios")
@@ -22,11 +23,63 @@ public class UsuarioController {
     @Autowired
     private ReservaRepository reservaRepository;
 
+    // ─── Validações ──────────────────────────────────────────────────────────────
+
+    private static final int TAMANHO_MINIMO_NOME = 3;
+    private static final int TAMANHO_MINIMO_SENHA = 6;
+    private static final Pattern PADRAO_EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    // Apenas letras (com acentos) e espaços — mesma regra do frontend
+    private static final Pattern PADRAO_NOME = Pattern.compile("^[\\p{L} ]+$");
+
+    /**
+     * Valida nome, e-mail e senha. Na edição a senha é opcional (em branco =
+     * mantém a atual). Devolve a mensagem de erro, ou null se estiver tudo certo.
+     */
+    private String validarUsuario(Usuario u, boolean senhaObrigatoria) {
+        String nome = u.getName() == null ? "" : u.getName().trim();
+        if (nome.isEmpty()) {
+            return "O nome é obrigatório.";
+        }
+        if (nome.length() < TAMANHO_MINIMO_NOME) {
+            return "O nome deve ter pelo menos " + TAMANHO_MINIMO_NOME + " letras.";
+        }
+        if (!PADRAO_NOME.matcher(nome).matches()) {
+            return "O nome deve conter apenas letras e espaços.";
+        }
+        String email = u.getEmail() == null ? "" : u.getEmail().trim();
+        if (email.isEmpty()) {
+            return "O e-mail é obrigatório.";
+        }
+        if (!PADRAO_EMAIL.matcher(email).matches()) {
+            return "Informe um e-mail válido (ex: nome@dominio.com).";
+        }
+        String senha = u.getSenha();
+        boolean senhaInformada = senha != null && !senha.isBlank();
+        if (senhaObrigatoria && !senhaInformada) {
+            return "A senha é obrigatória.";
+        }
+        if (senhaInformada && senha.length() < TAMANHO_MINIMO_SENHA) {
+            return "A senha deve ter pelo menos " + TAMANHO_MINIMO_SENHA + " caracteres.";
+        }
+        return null;
+    }
+
+    // Padroniza o e-mail (sem espaços e em minúsculas) e o nome (sem espaços sobrando)
+    private void normalizar(Usuario u) {
+        u.setName(u.getName().trim().replaceAll("\\s+", " "));
+        u.setEmail(u.getEmail().trim().toLowerCase());
+    }
+
     // ─── CREATE ──────────────────────────────────────────────────────────────────
  
     @PostMapping
     public ResponseEntity<?> cadastrarUsuario(@RequestBody Usuario usuario) {
-        if (usuarioRepository.existsByEmail(usuario.getEmail())) {
+        String erro = validarUsuario(usuario, true);
+        if (erro != null) {
+            return ResponseEntity.badRequest().body(erro);
+        }
+        normalizar(usuario);
+        if (usuarioRepository.existsByEmailIgnoreCase(usuario.getEmail())) {
             return ResponseEntity.badRequest().body("E-mail já cadastrado.");
         }
         usuario.setAtivo(true);
@@ -54,10 +107,15 @@ public class UsuarioController {
  
     @PutMapping("/{id}")
     public ResponseEntity<?> editarUsuario(@PathVariable Long id, @RequestBody Usuario dadosAtualizados) {
+        String erro = validarUsuario(dadosAtualizados, false);
+        if (erro != null) {
+            return ResponseEntity.badRequest().body(erro);
+        }
+        normalizar(dadosAtualizados);
         return usuarioRepository.findById(id).filter(Usuario::getAtivo).map(usuario -> {
             // Verifica conflito de e-mail com outro usuário
-            if (!usuario.getEmail().equals(dadosAtualizados.getEmail())
-                    && usuarioRepository.existsByEmail(dadosAtualizados.getEmail())) {
+            if (!usuario.getEmail().equalsIgnoreCase(dadosAtualizados.getEmail())
+                    && usuarioRepository.existsByEmailIgnoreCase(dadosAtualizados.getEmail())) {
                 return ResponseEntity.badRequest().body("E-mail já está em uso.");
             }
             usuario.setName(dadosAtualizados.getName());

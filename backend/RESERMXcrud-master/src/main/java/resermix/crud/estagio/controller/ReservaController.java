@@ -48,6 +48,10 @@ public class ReservaController {
         if (erroHorario != null) {
             return ResponseEntity.badRequest().body(erroHorario);
         }
+        String erroData = ReservaRequest.validarData(requisicao.getData(), requisicao.getHorarioInicio());
+        if (erroData != null) {
+            return ResponseEntity.badRequest().body(erroData);
+        }
 
         Optional<Usuario> usuario = usuarioRepository.findById(requisicao.getUsuarioId())
                 .filter(Usuario::getAtivo);
@@ -141,6 +145,10 @@ public class ReservaController {
         String erroHorario = ReservaRequest.validarHorario(requisicao.getHorarioInicio(), requisicao.getHorarioFim());
         if (erroHorario != null) {
             return ResponseEntity.badRequest().body(erroHorario);
+        }
+        String erroData = ReservaRequest.validarData(requisicao.getData(), requisicao.getHorarioInicio());
+        if (erroData != null) {
+            return ResponseEntity.badRequest().body(erroData);
         }
 
         Optional<Sala> sala = salaRepository.findById(requisicao.getSalaId());

@@ -8,6 +8,27 @@ function apenasLetras(valor) {
   return valor.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
 }
 
+const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TAMANHO_MINIMO_SENHA = 6;
+const TAMANHO_MINIMO_NOME = 3;
+
+// Devolve a mensagem de erro, ou null se os dados estiverem válidos (mesmas regras do backend)
+function validarUsuario({ name, email, senha }, senhaObrigatoria) {
+  if (name.trim().length < TAMANHO_MINIMO_NOME) {
+    return `O nome deve ter pelo menos ${TAMANHO_MINIMO_NOME} letras.`;
+  }
+  if (!REGEX_EMAIL.test(email.trim())) {
+    return 'Informe um e-mail válido (ex: nome@dominio.com).';
+  }
+  if (senhaObrigatoria && !senha) {
+    return 'A senha é obrigatória.';
+  }
+  if (senha && senha.length < TAMANHO_MINIMO_SENHA) {
+    return `A senha deve ter pelo menos ${TAMANHO_MINIMO_SENHA} caracteres.`;
+  }
+  return null;
+}
+
 export default function AbaUsuarios({ mostrarToast }) {
   const [usuarios, setUsuarios] = useState([]);
   const [busca, setBusca] = useState('');
@@ -60,6 +81,11 @@ export default function AbaUsuarios({ mostrarToast }) {
       mostrarToast('Preencha todos os campos obrigatórios!', 'error');
       return;
     }
+    const erroNovo = validarUsuario(novoUsuario, true);
+    if (erroNovo) {
+      mostrarToast(erroNovo, 'error');
+      return;
+    }
     setSalvandoNovo(true);
     try {
       await usuariosApi.criar({ name: name.trim(), email: email.trim(), senha, dtype });
@@ -92,6 +118,11 @@ export default function AbaUsuarios({ mostrarToast }) {
   async function handleSalvarEdicao() {
     if (!editando.name.trim() || !editando.email.trim()) {
       mostrarToast('Preencha nome e e-mail!', 'error');
+      return;
+    }
+    const erroEdicao = validarUsuario(editando, false);
+    if (erroEdicao) {
+      mostrarToast(erroEdicao, 'error');
       return;
     }
     setSalvandoEdicao(true);

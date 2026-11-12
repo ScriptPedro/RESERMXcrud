@@ -14,8 +14,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     // Busca usuário pelo e-mail (útil para login/validação)
     Optional<Usuario> findByEmail(String email);
  
-    // Verifica se já existe um e-mail cadastrado
-    boolean existsByEmail(String email);
+    // Verifica se já existe um e-mail cadastrado (sem diferenciar maiúsculas/minúsculas)
+    boolean existsByEmailIgnoreCase(String email);
 
     // Usuários ativos (não excluídos). "ativo IS NULL" cobre usuários antigos.
     @Query("SELECT u FROM Usuario u WHERE u.ativo = true OR u.ativo IS NULL ORDER BY u.name")

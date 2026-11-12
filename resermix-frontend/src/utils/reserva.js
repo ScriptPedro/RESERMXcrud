@@ -28,6 +28,24 @@ export function formatarHora(hora) {
 export const HORARIO_ABERTURA = '06:00';
 export const HORARIO_FECHAMENTO = '23:00';
 
+// "aaaa-mm-dd" e "HH:mm" de agora, no fuso do navegador
+export function hojeISO() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export function horaAtual() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+// true se a data já passou, ou se é hoje e o horário inicial já passou
+export function reservaNoPassado(data, inicio) {
+  const hoje = hojeISO();
+  return data < hoje || (data === hoje && !!inicio && inicio < horaAtual());
+}
+
 export function horarioForaDoFuncionamento(inicio, fim) {
   return (!!inicio && inicio < HORARIO_ABERTURA) || (!!fim && fim > HORARIO_FECHAMENTO);
 }

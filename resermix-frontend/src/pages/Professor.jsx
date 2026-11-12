@@ -11,7 +11,7 @@ import RecursosSala from '../components/RecursosSala';
 import {
   statusInfo, formatarData, formatarHora,
   HORARIO_ABERTURA, HORARIO_FECHAMENTO, horarioForaDoFuncionamento,
-  SEM_CAMPUS, campusDaSala, agruparPorCampus,
+  SEM_CAMPUS, campusDaSala, agruparPorCampus, hojeISO, reservaNoPassado,
 } from '../utils/reserva';
 
 const RESERVA_VAZIA = { salaId: '', data: '', horarioInicio: '', horarioFim: '', observacao: '' };
@@ -128,6 +128,10 @@ export default function Professor() {
       mostrarToast(t('reserva.foraHorario'), 'error');
       return;
     }
+    if (reservaNoPassado(reserva.data, reserva.horarioInicio)) {
+      mostrarToast(t('reserva.dataPassada'), 'error');
+      return;
+    }
     setEnviando(true);
     try {
       await reservasApi.criar({
@@ -221,7 +225,8 @@ export default function Professor() {
                 <input
                   id="res-data"
                   type="date"
-                  value={reserva.data}
+                  min={hojeISO()}
+value={reserva.data}
                   onChange={(e) => setReserva({ ...reserva, data: e.target.value })}
                 />
               </div>

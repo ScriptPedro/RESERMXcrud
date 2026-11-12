@@ -32,6 +32,22 @@ public class ReservaRequest {
         return null;
     }
 
+    /**
+     * Impede reservas no passado: a data não pode ser anterior a hoje e,
+     * se for hoje, o horário inicial não pode já ter passado.
+     * Devolve a mensagem de erro, ou null se estiver tudo certo.
+     */
+    public static String validarData(LocalDate data, LocalTime inicio) {
+        LocalDate hoje = LocalDate.now();
+        if (data.isBefore(hoje)) {
+            return "Não é possível fazer reservas para datas passadas.";
+        }
+        if (data.isEqual(hoje) && inicio.isBefore(LocalTime.now())) {
+            return "O horário inicial já passou. Escolha um horário futuro.";
+        }
+        return null;
+    }
+
     @NotNull(message = "O usuário responsável pela reserva é obrigatório.")
     private Long usuarioId;
 
