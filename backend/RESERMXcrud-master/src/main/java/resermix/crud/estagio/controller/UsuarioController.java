@@ -1,11 +1,15 @@
 package resermix.crud.estagio.controller;
  
+import resermix.crud.estagio.entity.Reserva;
 import resermix.crud.estagio.entity.Usuario;
+import resermix.crud.estagio.repository.ReservaRepository;
 import resermix.crud.estagio.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
- 
+
+import java.time.LocalDate;
 import java.util.List;
  
 @RestController
@@ -14,7 +18,10 @@ public class UsuarioController {
  
     @Autowired
     private UsuarioRepository usuarioRepository;
- 
+
+    @Autowired
+    private ReservaRepository reservaRepository;
+
     // ─── CREATE ──────────────────────────────────────────────────────────────────
  
     @PostMapping
@@ -22,6 +29,7 @@ public class UsuarioController {
         if (usuarioRepository.existsByEmail(usuario.getEmail())) {
             return ResponseEntity.badRequest().body("E-mail já cadastrado.");
         }
+        usuario.setAtivo(true);
         Usuario salvo = usuarioRepository.save(usuario);
         return ResponseEntity.ok(salvo);
     }
@@ -30,7 +38,9 @@ public class UsuarioController {
  
     @GetMapping
     public List<Usuario> listarUsuarios() {
-        return usuarioRepository.findAll();
+        // Apenas usuários ativos. Como o login do frontend usa esta lista,
+        // um usuário excluído (inativo) deixa de conseguir entrar no sistema.
+        return usuarioRepository.buscarAtivos();
     }
  
     @GetMapping("/{id}")
@@ -44,7 +54,7 @@ public class UsuarioController {
  
     @PutMapping("/{id}")
     public ResponseEntity<?> editarUsuario(@PathVariable Long id, @RequestBody Usuario dadosAtualizados) {
-        return usuarioRepository.findById(id).map(usuario -> {
+        return usuarioRepository.findById(id).filter(Usuario::getAtivo).map(usuario -> {
             // Verifica conflito de e-mail com outro usuário
             if (!usuario.getEmail().equals(dadosAtualizados.getEmail())
                     && usuarioRepository.existsByEmail(dadosAtualizados.getEmail())) {
@@ -62,12 +72,24 @@ public class UsuarioController {
  
     // ─── DELETE (bloquearUsuario) ─────────────────────────────────────────────────
  
+    /**
+     * Exclusão LÓGICA: o usuário não é apagado do banco, apenas marcado como
+     * inativo (ativo = false). O histórico de reservas feitas por ele é
+     * preservado, ele deixa de aparecer nas listagens e não consegue mais
+     * fazer login. As reservas futuras ainda ativas dele são canceladas.
+     */
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
-        if (!usuarioRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        usuarioRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return usuarioRepository.findById(id).filter(Usuario::getAtivo).map(usuario -> {
+            usuario.setAtivo(false);
+            usuarioRepository.save(usuario);
+
+            List<Reserva> futuras = reservaRepository.buscarFuturasDoUsuario(id, LocalDate.now());
+            futuras.forEach(Reserva::cancelar);
+            reservaRepository.saveAll(futuras);
+
+            return ResponseEntity.noContent().<Void>build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

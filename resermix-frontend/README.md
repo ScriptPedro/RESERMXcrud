@@ -6,6 +6,24 @@ Frontend em React para o backend Spring Boot do projeto **ReserMX CRUD**, com:
 - **Tela do Coordenador** — CRUD completo de Salas e Usuários (abas), igual ao painel administrativo original.
 - **Tela do Professor** — visualização das salas disponíveis para reserva (`GET /salas/disponiveis`).
 
+## Acessibilidade (aba Configurações)
+
+Disponível para Coordenador e Professor; as escolhas ficam salvas no navegador.
+
+- **Tema escuro** (interruptor ON/OFF)
+- **Tamanho das letras** em 3 níveis: Normal · Grande · Extra grande
+- **Cores para daltonismo** (interruptor ON/OFF): paleta azul/laranja de Okabe-Ito no lugar de verde/vermelho, com símbolos nos status (✓ ✕ … ▶ ■)
+- **Idioma** (PT-BR, EN, ES)
+- Fonte do sistema: **Atkinson Hyperlegible** (instalada via `@fontsource`, funciona offline)
+
+## Reserva de salas por horário
+
+Na aba "Reservar sala" o professor escolhe primeiro **data + horário inicial + horário final**; a lista mostra só as salas livres nesse período (`GET /salas/disponiveis?data=AAAA-MM-DD&horarioInicio=HH:mm&horarioFim=HH:mm`). Sala com reserva ativa que se sobreponha ao horário não aparece. Horários consecutivos (10:00–12:00 e 12:00–13:00) não conflitam; reservas canceladas não bloqueiam. Sem parâmetros, o endpoint mantém o comportamento antigo.
+
+## Recursos da sala
+
+No cadastro/edição de sala (aba Salas, Coordenador) dá para informar **TVs** e **computadores** (quantidade, 0 = não tem), **ar-condicionado** e **data show** (ON/OFF). Eles aparecem em etiquetas na tabela de salas e no cartão "Livre no período" da tela do professor. Campos novos na entidade `Sala`: `tvs`, `computadores`, `arCondicionado`, `dataShow` — o Hibernate (`ddl-auto=update`) cria as colunas sozinho e as salas antigas ficam com "sem recursos".
+
 ## Pré-requisitos
 
 - Node.js 18+ instalado

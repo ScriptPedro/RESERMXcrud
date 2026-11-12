@@ -26,8 +26,13 @@ public abstract class Usuario {
     private String name;
     private String email;
     private String senha;
- 
-  
+
+    // Exclusão lógica (soft delete): usuário "excluído" fica inativo, mas
+    // continua no banco para preservar o histórico de reservas feitas por ele.
+    // Usuários antigos (coluna nula) são tratados como ativos.
+    private Boolean ativo = true;
+
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
  
@@ -39,4 +44,7 @@ public abstract class Usuario {
  
     public String getSenha() { return senha; }
     public void setSenha(String senha) { this.senha = senha; }
+
+    public Boolean getAtivo() { return ativo == null || ativo; }
+    public void setAtivo(Boolean ativo) { this.ativo = ativo; }
 }

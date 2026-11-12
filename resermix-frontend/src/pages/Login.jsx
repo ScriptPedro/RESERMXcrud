@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useT } from '../context/ConfiguracoesContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -10,13 +11,14 @@ export default function Login() {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
 
   async function handleSubmit(e) {
     e.preventDefault();
     setErro('');
 
     if (!email.trim() || !senha) {
-      setErro('Preencha e-mail e senha.');
+      setErro(t('login.preenchaCampos'));
       return;
     }
 
@@ -29,7 +31,7 @@ export default function Login() {
         navigate('/professor');
       }
     } catch (err) {
-      setErro(err.message || 'Não foi possível entrar.');
+      setErro(err.message || t('login.falhou'));
     } finally {
       setCarregando(false);
     }
@@ -38,24 +40,24 @@ export default function Login() {
   return (
     <div className="login-wrap">
       <div className="login-box">
-        <h1>ReserMix</h1>
-        <p className="subtitle">Entre com seu e-mail e senha</p>
+        <h1>{t('app.nome')}</h1>
+        <p className="subtitle">{t('login.subtitulo')}</p>
 
         {erro && <div className="login-error">{erro}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>E-mail</label>
+            <label>{t('login.email')}<span className="required-mark">*</span></label>
             <input
               type="email"
-              placeholder="Ex: joao@escola.com"
+              placeholder={t('login.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoFocus
             />
           </div>
           <div className="form-group">
-            <label>Senha</label>
+            <label>{t('login.senha')}<span className="required-mark">*</span></label>
             <input
               type="password"
               placeholder="••••••••"
@@ -70,7 +72,7 @@ export default function Login() {
               style={{ width: '100%' }}
               disabled={carregando}
             >
-              {carregando ? 'Entrando...' : 'Entrar'}
+              {carregando ? t('login.entrando') : t('login.entrar')}
             </button>
           </div>
         </form>
