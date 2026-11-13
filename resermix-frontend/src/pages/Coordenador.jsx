@@ -7,6 +7,7 @@ import Toast from '../components/Toast';
 import AbaSalas from '../components/AbaSalas';
 import AbaUsuarios from '../components/AbaUsuarios';
 import AbaReservas from '../components/AbaReservas';
+import AbaReservar from '../components/AbaReservar';
 import AbaConfiguracoes from '../components/AbaConfiguracoes';
 import Dashboard from '../components/Dashboard';
 
@@ -56,6 +57,12 @@ export default function Coordenador() {
           {t('aba.usuarios')}
         </button>
         <button
+          className={`tab ${abaAtiva === 'reservar' ? 'active' : ''}`}
+          onClick={() => setAbaAtiva('reservar')}
+        >
+          {t('aba.reservar')}
+        </button>
+        <button
           className={`tab ${abaAtiva === 'reservas' ? 'active' : ''}`}
           onClick={() => setAbaAtiva('reservas')}
         >
@@ -72,6 +79,7 @@ export default function Coordenador() {
       {abaAtiva === 'dashboard' && <Dashboard tipo="CORDENADOR" nome={usuario?.name} />}
       {abaAtiva === 'salas' && <AbaSalas mostrarToast={mostrarToast} />}
       {abaAtiva === 'usuarios' && <AbaUsuarios mostrarToast={mostrarToast} />}
+      {abaAtiva === 'reservar' && <AbaReservar usuario={usuario} mostrarToast={mostrarToast} />}
       {abaAtiva === 'reservas' && <AbaReservas mostrarToast={mostrarToast} />}
       {abaAtiva === 'configuracoes' && <AbaConfiguracoes mostrarToast={mostrarToast} />}
 
